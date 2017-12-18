@@ -1,0 +1,36 @@
+{
+  "name": "DateCoin",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Alexander Ustinov <rusfearuth@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "runserver": "yarn testrpc --port 7545",
+    "build": "rm -rf build && yarn truffle compile",
+    "pretest": "yarn build && yarn truffle migrate --reset --network development",
+    "test": "yarn truffle test --network development",
+    "deploy-rinkeby": "rm -rf build/ && yarn truffle compile && yarn truffle migrate --network rinkeby && yarn truffle-flattener contracts/DateCoinCrowdsale.sol",
+    "predeploy": "rm -rf deploy/ && mkdir -vp deploy/ && node_modules/.bin/truffle-flattener contracts/DateCoin.sol > deploy/DateCoin.full.sol && node_modules/.bin/truffle-flattener contracts/DateCoinCrowdsale.sol > deploy/DateCoinCrowdsale.full.sol && node_modules/.bin/truffle-flattener contracts/DateCoinBuyBack.sol > deploy/DateCoinBuyBack.full.sol"
+  },
+  "devDependencies": {
+    "babel-polyfill": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-register": "^6.26.0",
+    "chai": "^4.1.2",
+    "chai-as-promised": "^7.1.1",
+    "chai-bignumber": "^2.0.2",
+    "ethereumjs-testrpc": "^6.0.3",
+    "ethereumjs-util": "^5.1.2",
+    "solgraph": "^0.2.6",
+    "truffle": "^4.0.1",
+    "truffle-flattener": "^1.2.0"
+  },
+  "dependencies": {
+    "zeppelin-solidity": "^1.4.0"
+  },
+  "babel": {
+    "presets": [
+      "env"
+    ]
+  }
+}
