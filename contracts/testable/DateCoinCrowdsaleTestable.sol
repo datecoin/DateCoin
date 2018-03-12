@@ -21,16 +21,6 @@ contract DateCoinCrowdsaleTestable is DateCoinCrowdsale {
   {
   }
 
-  // overriding DateCoinCrowdsale#defineDiscountBorderLines for changing discount borderlines
-  function defineDiscountBorderLines() internal onlyOwner {
-    discountTokens[25] = 57 * (1 ether);
-    discountTokens[20] = 114 * (1 ether);
-    discountTokens[15] = 171 * (1 ether);
-    discountTokens[10] = 228 * (1 ether);
-    discountTokens[5] = 285 * (1 ether);
-  }
-
-
   function discount(uint8 _percent) public view returns (uint256) {
     return _discount(_percent);
   }

@@ -43,29 +43,28 @@ contract DateCoinCrowdsale is Crowdsale, Ownable {
     require(validPurchase());
 
     uint256 weiAmount = msg.value;
-    // totalSupply - current vault balance
-    uint256 totalSupplied = totalSupply.sub(token.balanceOf(vault));
+    uint256 sold = totalSold();
 
     uint256 tokens = weiAmount.mul(rate);
 
-    if (totalSupplied < _discount(25)) {
-      tokens = _calculateTokens(tokens, 75, totalSupplied);
+    if (sold < _discount(25)) {
+      tokens = _calculateTokens(tokens, 75, sold);
     }
-    else if (totalSupplied >= _discount(25) && totalSupplied < _discount(20)) {
-      tokens = _calculateTokens(tokens, 80, totalSupplied);
+    else if (sold >= _discount(25) && sold < _discount(20)) {
+      tokens = _calculateTokens(tokens, 80, sold);
     }
-    else if (totalSupplied >= _discount(20) && totalSupplied < _discount(15)) {
-      tokens = _calculateTokens(tokens, 85, totalSupplied);
+    else if (sold >= _discount(20) && sold < _discount(15)) {
+      tokens = _calculateTokens(tokens, 85, sold);
     }
-    else if (totalSupplied >= _discount(15) && totalSupplied < _discount(10)) {
-      tokens = _calculateTokens(tokens, 90, totalSupplied);
+    else if (sold >= _discount(15) && sold < _discount(10)) {
+      tokens = _calculateTokens(tokens, 90, sold);
     }
-    else if (totalSupplied >= _discount(10) && totalSupplied < _discount(5)) {
-      tokens = _calculateTokens(tokens, 95, totalSupplied);
+    else if (sold >= _discount(10) && sold < _discount(5)) {
+      tokens = _calculateTokens(tokens, 95, sold);
     }
 
     // Check limit
-    require(tokens.add(totalSupplied) <= totalSupply);
+    require(sold.add(tokens) <= totalSupply);
 
     weiRaised = weiRaised.add(weiAmount);
     token.transferFrom(vault, beneficiary, tokens);
@@ -74,12 +73,17 @@ contract DateCoinCrowdsale is Crowdsale, Ownable {
     forwardFunds();
   }
 
+  function totalSold() public view returns(uint256) {
+    return totalSupply.sub(token.balanceOf(vault));
+  }
+
   /**
     * @dev This method is allowed to transfer tokens to _to account
     * @param _to target account address
     * @param _amount amout of buying tokens
     */
   function transferTokens(address _to, uint256 _amount) public onlyOwner {
+    require(!hasEnded());
     require(_to != address(0));
     require(_amount != 0);
     require(token.balanceOf(vault) >= _amount);
@@ -103,10 +107,10 @@ contract DateCoinCrowdsale is Crowdsale, Ownable {
   // This method is used for definition of discountTokens borderlines
   function defineDiscountBorderLines() internal onlyOwner {
     discountTokens[25] = 57 * (100000 ether);
-    discountTokens[20] = 114 * (100000 ether);
-    discountTokens[15] = 171 * (100000 ether);
-    discountTokens[10] = 228 * (100000 ether);
-    discountTokens[5] = 285 * (100000 ether);
+    discountTokens[20] = 171 * (100000 ether);
+    discountTokens[15] = 342 * (100000 ether);
+    discountTokens[10] = 570 * (100000 ether);
+    discountTokens[5] = 855 * (100000 ether);
   }
 
   /**
@@ -126,6 +130,16 @@ contract DateCoinCrowdsale is Crowdsale, Ownable {
     return super.hasEnded() || icoLimitReached;
   }
 
+  function burnLeftTokens() public {
+    require(super.hasEnded());
+
+    uint256 tokens = token.balanceOf(vault);
+
+    require(tokens > 0);
+
+    DateCoin dateCoin = DateCoin(token);
+    dateCoin.burnFrom(vault, tokens);
+  }
 
   function _discount(uint8 _percent) internal view returns (uint256) {
     return discountTokens[_percent];

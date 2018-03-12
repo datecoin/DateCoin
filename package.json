@@ -6,6 +6,7 @@
   "license": "MIT",
   "scripts": {
     "runserver": "yarn testrpc --accounts 20 --port 7545",
+    "runserver-ganache": "yarn ganache-cli --accounts 20 --defaultBalanceEther 1000000000 --port 7545",
     "build": "rm -rf build && yarn truffle compile",
     "pretest": "yarn build && yarn truffle migrate --reset --network development",
     "test": "yarn truffle test --network development",
@@ -21,6 +22,7 @@
     "chai-bignumber": "^2.0.2",
     "ethereumjs-testrpc": "^6.0.3",
     "ethereumjs-util": "^5.1.2",
+    "ganache-cli": "^6.1.0",
     "solgraph": "^0.2.6",
     "truffle": "^4.0.1",
     "truffle-flattener": "^1.2.0"

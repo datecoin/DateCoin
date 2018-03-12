@@ -25,14 +25,75 @@ contract('DateCoin BuyBack', accounts => {
   let endTime = 0;
   let afterEndTime = 0;
 
+  // Accounts
+  const team = accounts[19];
+  const adviser1 = accounts[18];
+  const adviser2 = accounts[17];
+  const bounty = accounts[16];
+  const marketing = accounts[15];
+  const reserved = accounts[14];
+  const preSale = accounts[13];
+  const crowdsale = accounts[12];
+  const wallet = accounts[11];
+
+  // Amounts
+  const cap = web3.toBigNumber(290769231);
+
+  // 34 892 307
+  const teamAmount = 34892307;
+  // 11 630 769
+  const adviser1Amount = 11630769;
+  // 11 630 769
+  const adviser2Amount = 11630769;
+  // 2 907 692
+  const bountyAmount = 2907692;
+  // 11 630 769
+  const marketingAmount = 11630769;
+  // +29 076 923
+  const reservedAmount = 29076924;
+  // 18 000 000
+  const preSaleAmount = 18000000;
+  // 171 000 000
+  const crowdsaleAmount = 171000000;
+  // 189 000 000
+  // Total: 290 769 230
+
   before(async () => await advanceBlock());
 
   beforeEach(async () => {
     startTime = latestTime() + duration.weeks(1);
     endTime = startTime + duration.weeks(1);
     afterEndTime = endTime + duration.seconds(1);
-    token = await DateCoin.new({ from: owner });
+
+    token = await DateCoin.new(ether(cap), { from: owner });
+
+    await token.mint(team, ether(teamAmount));
+    await token.mint(adviser1, ether(adviser1Amount));
+    await token.mint(adviser2, ether(adviser2Amount));
+    await token.mint(bounty, ether(bountyAmount));
+    await token.mint(marketing, ether(marketingAmount));
+    await token.mint(reserved, ether(reservedAmount));
+    await token.mint(preSale, ether(preSaleAmount));
+    await token.mint(crowdsale, ether(crowdsaleAmount));
+    await token.finishMinting();
+
+    const yearReleaseTime = latestTime() + duration.years(1);
+    const halfYearReleaseTime = latestTime() + duration.months(6);
+
+    await token.lockAccount(team, yearReleaseTime);
+    await token.lockAccount(adviser2, halfYearReleaseTime);
+    await token.lockAccount(reserved, halfYearReleaseTime);
+
+    await token.approve(contract.address, ether(crowdsaleAmount), {
+      from: crowdsale,
+    });
+
+    await token.approve(contract.address, ether(preSaleAmount), {
+      from: preSale,
+    });
+
     contract = await DateCoinBuyBack.new(token.address, { from: owner });
+
     await token.transferOwnership(contract.address);
   });
 

@@ -9,11 +9,11 @@ const should = require('chai')
 
 export const _totalSupplied = {
   25: 0,
-  20: 12,
-  15: 42,
-  10: 92,
-  5: 162,
-  0: 252,
+  20: 5700000,
+  15: 17100000,
+  10: 34200000,
+  5: 57000000,
+  0: 85500000,
 };
 
 export const prices = {
@@ -40,9 +40,9 @@ export const _passDiaposons = async params => {
 
   const isEnded = await contract.hasEnded.call();
 
-  isEnded.should.equal(false, `ICO hasn't finished yet`);
+  isEnded.should.equal(false, "ICO hasn't finished yet");
 
-  let totalSupplied = await token.totalSupply.call();
+  let totalSupplied = await contract.totalSold();
 
   if (to == 25) {
     // Plus extra for checkout border-line
@@ -62,12 +62,20 @@ export const _passDiaposons = async params => {
 
   // Buy for 25% sale off
 
-  await _sendTokens({ contract, investor, saleOff: SALE_25, tokens: 12 });
+  await _sendTokens({
+    contract,
+    investor,
+    saleOff: SALE_25,
+    tokens: 5700000,
+  });
 
   // Checkout total supply
 
-  totalSupplied = await token.totalSupply.call();
-  totalSupplied.should.be.bignumber.equal(ether(12), 'Total supplied is 12');
+  totalSupplied = await contract.totalSold();
+  totalSupplied.should.be.bignumber.equal(
+    ether(5700000),
+    "Total supplied is 5'700'000",
+  );
 
   if (to == 20) {
     // Plus extra for checkout border-line
@@ -83,12 +91,15 @@ export const _passDiaposons = async params => {
 
   // Buy for 20% sale off
 
-  await _sendTokens({ contract, investor, saleOff: SALE_20, tokens: 30 });
+  await _sendTokens({ contract, investor, saleOff: SALE_20, tokens: 11400000 });
 
   // Checkout total supply
 
-  totalSupplied = await token.totalSupply.call();
-  totalSupplied.should.be.bignumber.equal(ether(42), 'Total supplied is 42');
+  totalSupplied = await contract.totalSold();
+  totalSupplied.should.be.bignumber.equal(
+    ether(17100000),
+    "Total supplied is 17'100'000",
+  );
 
   if (to == 15) {
     // Plus extra for checkout border-line
@@ -104,12 +115,15 @@ export const _passDiaposons = async params => {
 
   // Buy for 15% sale off
 
-  await _sendTokens({ contract, investor, saleOff: SALE_15, tokens: 50 });
+  await _sendTokens({ contract, investor, saleOff: SALE_15, tokens: 17100000 });
 
   // Checkout total supply
 
-  totalSupplied = await token.totalSupply.call();
-  totalSupplied.should.be.bignumber.equal(ether(92), 'Total supplied is 92');
+  totalSupplied = await contract.totalSold();
+  totalSupplied.should.be.bignumber.equal(
+    ether(34200000),
+    "Total supplied is 34'200'000",
+  );
 
   if (to == 10) {
     // Plus extra for checkout border-line
@@ -125,12 +139,15 @@ export const _passDiaposons = async params => {
 
   // Buy for 10% sale off
 
-  await _sendTokens({ contract, investor, saleOff: SALE_10, tokens: 70 });
+  await _sendTokens({ contract, investor, saleOff: SALE_10, tokens: 22800000 });
 
   // Checkout total supply
 
-  totalSupplied = await token.totalSupply.call();
-  totalSupplied.should.be.bignumber.equal(ether(162), 'Total supplied is 162');
+  totalSupplied = await contract.totalSold();
+  totalSupplied.should.be.bignumber.equal(
+    ether(57000000),
+    "Total supplied is 57'000'000",
+  );
 
   if (to == 5) {
     // Plus extra for checkout border-line
@@ -146,12 +163,15 @@ export const _passDiaposons = async params => {
 
   // Buy for 5% sale off
 
-  await _sendTokens({ contract, investor, saleOff: SALE_5, tokens: 90 });
+  await _sendTokens({ contract, investor, saleOff: SALE_5, tokens: 28500000 });
 
   // Checkout total supply
 
-  totalSupplied = await token.totalSupply.call();
-  totalSupplied.should.be.bignumber.equal(ether(252), 'Total supplied is 252');
+  totalSupplied = await contract.totalSold();
+  totalSupplied.should.be.bignumber.equal(
+    ether(85500000),
+    "Total supplied is 85'500'000",
+  );
 };
 
 export const _sellAllTokens = async params => {
@@ -164,13 +184,13 @@ export const _sellAllTokens = async params => {
     contract,
     investor,
     saleOff: prices.PRICE,
-    tokens: 500,
+    tokens: 85500000,
   });
 
   // Checkout of total supply
-  const totalSupplied = await token.totalSupply.call();
+  const totalSupplied = await contract.totalSold();
   totalSupplied.should.be.bignumber.equal(
-    ether(752),
-    'Total supply is 752 DTC',
+    ether(171000000),
+    "Total supply is 171'000'000 DTC",
   );
 };

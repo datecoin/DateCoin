@@ -25,8 +25,6 @@ const should = require('chai')
 
 contract('DateCoin Crowdsale', accounts => {
   const owner = accounts[0];
-  const frozenTokensWallet = accounts[8];
-  const teamTokensWallet = accounts[7];
   let contract = null;
   let token = null;
 
@@ -36,8 +34,6 @@ contract('DateCoin Crowdsale', accounts => {
   const rate = 4000;
   // Only for testing
   const cap = web3.toBigNumber(290769231);
-  const icoLimit = 752;
-  const emission = 1150;
 
   // Accounts
   const team = accounts[19];
@@ -50,6 +46,27 @@ contract('DateCoin Crowdsale', accounts => {
   const crowdsale = accounts[12];
   const wallet = accounts[11];
 
+  // Amounts
+
+  // 34 892 307
+  const teamAmount = 34892307;
+  // 11 630 769
+  const adviser1Amount = 11630769;
+  // 11 630 769
+  const adviser2Amount = 11630769;
+  // 2 907 692
+  const bountyAmount = 2907692;
+  // 11 630 769
+  const marketingAmount = 11630769;
+  // +29 076 923
+  const reservedAmount = 29076924;
+  // 18 000 000
+  const preSaleAmount = 18000000;
+  // 171 000 000
+  const crowdsaleAmount = 171000000;
+  // 189 000 000
+  // Total: 290 769 230
+
   before(async () => await advanceBlock());
 
   beforeEach(async () => {
@@ -57,35 +74,16 @@ contract('DateCoin Crowdsale', accounts => {
     endTime = startTime + duration.weeks(1);
     afterEndTime = endTime + duration.seconds(1);
 
-    token = await DateCoin.new(cap, { from: owner });
+    token = await DateCoin.new(ether(cap), { from: owner });
 
-    // 34 892 307
-    const teamAmount = 34892307;
-    // 11 630 769
-    const adviser1Amount = 11630769;
-    // 11 630 769
-    const adviser2Amount = 11630769;
-    // 2 907 692
-    const bountyAmount = 2907692;
-    // 11 630 769
-    const marketingAmount = 11630769;
-    // +29 076 923
-    const reservedAmount = 29076924;
-    // 18 000 000
-    const preSaleAmount = 18000000;
-    // 171 000 000
-    const crowdsaleAmount = 171000000;
-    // 189 000 000
-    // Total: 290 769 230
-
-    await token.mint(team, teamAmount);
-    await token.mint(adviser1, adviser1Amount);
-    await token.mint(adviser2, adviser2Amount);
-    await token.mint(bounty, bountyAmount);
-    await token.mint(marketing, marketingAmount);
-    await token.mint(reserved, reservedAmount);
-    await token.mint(preSale, preSaleAmount);
-    await token.mint(crowdsale, crowdsaleAmount);
+    await token.mint(team, ether(teamAmount));
+    await token.mint(adviser1, ether(adviser1Amount));
+    await token.mint(adviser2, ether(adviser2Amount));
+    await token.mint(bounty, ether(bountyAmount));
+    await token.mint(marketing, ether(marketingAmount));
+    await token.mint(reserved, ether(reservedAmount));
+    await token.mint(preSale, ether(preSaleAmount));
+    await token.mint(crowdsale, ether(crowdsaleAmount));
     await token.finishMinting();
 
     const yearReleaseTime = latestTime() + duration.years(1);
@@ -106,13 +104,19 @@ contract('DateCoin Crowdsale', accounts => {
       { from: owner },
     );
 
-    await token.approve(contract.address, crowdsaleAmount);
+    await token.approve(contract.address, ether(crowdsaleAmount), {
+      from: crowdsale,
+    });
+
+    await token.approve(contract.address, ether(preSaleAmount), {
+      from: preSale,
+    });
 
     await token.transferOwnership(contract.address);
   });
 
-  describe('Contract params', () => {
-    it('checkout owner', async () => {
+  describe('Contract', () => {
+    it('should have right owners', async () => {
       // Checkout crowdsale owner
       const _owner = await contract.owner.call();
       _owner.should.equal(owner, `Contract owner is ${owner}`);
@@ -121,13 +125,14 @@ contract('DateCoin Crowdsale', accounts => {
 
       // Checkout token owner
       const tokenOwner = await token.owner.call();
+
       tokenOwner.should.equal(
         contractAddress,
         `DateCoin owner is Crowdsale contract`,
       );
     });
 
-    it('checkout wallets', async () => {
+    it('should have set accounts', async () => {
       const fundWallet = await contract.wallet.call();
 
       fundWallet.should.equal(wallet, 'Funds wallet');
@@ -141,26 +146,31 @@ contract('DateCoin Crowdsale', accounts => {
       preSaleWallet.should.equal(preSale, 'PreSale tokens wallet');
     });
 
-    it('wallet balances', async () => {
-      const frozenTokens = await token.balanceOf.call(frozenTokensWallet);
-      frozenTokens.should.be.bignumber.equal(ether(0), "Tokens weren't frozen");
+    it('should have enough amount for selling', async () => {
+      const amount = await token.allowance(crowdsale, contract.address);
+      amount
+        .valueOf()
+        .should.equal(ether(crowdsaleAmount).valueOf(), 'Amount for crowdsale');
 
-      const teamTokens = await token.balanceOf.call(teamTokensWallet);
-      teamTokens.should.be.bignumber.equal(
-        ether(0),
-        "Team doesn't have any tokens",
-      );
+      const _preSaleAmount = await token.allowance(preSale, contract.address);
+      _preSaleAmount
+        .valueOf()
+        .should.equal(ether(preSaleAmount).valueOf(), 'Amount for preSale');
+    });
+
+    it('should allow to transfer calculated token', async () => {
+      await increaseTimeTo(startTime);
+      const anotherAccount = accounts[5];
+
+      await contract.transferTokens(anotherAccount, ether(10));
+
+      const balance = await token.balanceOf(anotherAccount);
+
+      balance.should.be.bignumber.equal(ether(10), 'Tokens were transfered');
     });
   });
 
   describe('Normal buying cases', () => {
-    it('totalSupply', async () => {
-      console.log(await contract.testA());
-      console.log(await contract.balanceOf());
-      const tokensss = await contract.testBuy();
-      console.log(tokensss);
-    });
-
     it('buy tokens by 25% sale off', async () => {
       await increaseTimeTo(startTime);
       const investor = accounts[1];
@@ -198,15 +208,14 @@ contract('DateCoin Crowdsale', accounts => {
       });
 
       // Checkout of total supply
-      const totalSupplied = await token.totalSupply.call();
+      const sold = await contract.totalSold();
       expected = web3.fromWei(ether(6.7), 'ether');
       web3
-        .fromWei(totalSupplied, 'ether')
+        .fromWei(sold, 'ether')
         .valueOf()
         .should.equal(expected.valueOf(), 'Total supply is 6.7 DTC');
     });
 
-    /*
     it('buy tokens by 20% sale off', async () => {
       await increaseTimeTo(startTime);
       const investor = accounts[3];
@@ -224,11 +233,11 @@ contract('DateCoin Crowdsale', accounts => {
 
       let expected = web3.fromWei(ether(_totalSupplied[20] + 12), 'ether');
 
-      const totalSupplied = await token.totalSupply.call();
+      const totalSupplied = await contract.totalSold();
       web3
         .fromWei(totalSupplied, 'ether')
         .valueOf()
-        .should.equal(expected.valueOf(), 'Total supply is 24 DTC');
+        .should.equal(expected.valueOf(), "Total supply is 5'700'012 DTC");
     });
 
     it('buy tokens by 15% sale off', async () => {
@@ -247,11 +256,11 @@ contract('DateCoin Crowdsale', accounts => {
 
       let expected = web3.fromWei(ether(_totalSupplied[15] + 1), 'ether');
 
-      const totalSupplied = await token.totalSupply.call();
+      const totalSupplied = await contract.totalSold();
       web3
         .fromWei(totalSupplied, 'ether')
         .valueOf()
-        .should.equal(expected.valueOf(), 'Total supply is 43 DTC');
+        .should.equal(expected.valueOf(), "Total supply is 17'100'001 DTC");
     });
 
     it('buy tokens by 10% sale off', async () => {
@@ -270,11 +279,11 @@ contract('DateCoin Crowdsale', accounts => {
 
       let expected = web3.fromWei(ether(_totalSupplied[10] + 3), 'ether');
 
-      const totalSupplied = await token.totalSupply.call();
+      const totalSupplied = await contract.totalSold();
       web3
         .fromWei(totalSupplied, 'ether')
         .valueOf()
-        .should.equal(expected.valueOf(), 'Total supply is 95 DTC');
+        .should.equal(expected.valueOf(), "Total supply is 34'200'003 DTC");
     });
 
     it('buy tokens by 5% sale off', async () => {
@@ -293,11 +302,11 @@ contract('DateCoin Crowdsale', accounts => {
 
       let expected = web3.fromWei(ether(_totalSupplied[5] + 5.5), 'ether');
 
-      const totalSupplied = await token.totalSupply.call();
+      const totalSupplied = await contract.totalSold();
       web3
         .fromWei(totalSupplied, 'ether')
         .valueOf()
-        .should.equal(expected.valueOf(), 'Total supply is 167.5 DTC');
+        .should.equal(expected.valueOf(), "Total supply is 57'000'005.5 DTC");
     });
 
     it('buy tokens by 0% sale off', async () => {
@@ -316,16 +325,14 @@ contract('DateCoin Crowdsale', accounts => {
 
       let expected = web3.fromWei(ether(_totalSupplied[0] + 3), 'ether');
 
-      const totalSupplied = await token.totalSupply.call();
+      const totalSupplied = await contract.totalSold();
       web3
         .fromWei(totalSupplied, 'ether')
         .valueOf()
-        .should.equal(expected.valueOf(), 'Total supply is 255 DTC');
+        .should.equal(expected.valueOf(), "Total supply is 85'500'003 DTC");
     });
-    */
   });
 
-  /*
   describe('Border-line buying cases', () => {
     it('from 25% to 20% pass', async () => {
       await increaseTimeTo(startTime);
@@ -333,7 +340,7 @@ contract('DateCoin Crowdsale', accounts => {
 
       // Checkout of contract isn't ended
       const isEnded = await contract.hasEnded.call();
-      isEnded.should.equal(false, `ICO hasn't finished yet`);
+      isEnded.should.equal(false, "ICO hasn't finished yet");
 
       // Checkout of investor balance before buying
       const beforeBalance = await token.balanceOf.call(investor);
@@ -350,7 +357,7 @@ contract('DateCoin Crowdsale', accounts => {
       });
 
       // Checkout of total supply
-      let totalSupplied = await token.totalSupply.call();
+      let totalSupplied = await contract.totalSold();
       totalSupplied.should.be.bignumber.equal(
         ether(11),
         'Total supply is 11 DTC',
@@ -361,14 +368,14 @@ contract('DateCoin Crowdsale', accounts => {
         contract,
         investor,
         saleOff: prices.SALE_25,
-        tokens: 3,
+        tokens: 5700000,
       });
 
       // Checkout of total supply
-      totalSupplied = await token.totalSupply.call();
+      totalSupplied = await contract.totalSold();
       totalSupplied.should.be.bignumber.equal(
-        web3.toBigNumber(13875000000000000000),
-        'Total supply is 13.8125 DTC',
+        '5.7000103125e+24',
+        "Total supply is 5'700'010.3125 DTC",
       );
     });
 
@@ -383,14 +390,14 @@ contract('DateCoin Crowdsale', accounts => {
         contract,
         investor,
         saleOff: prices.SALE_20,
-        tokens: 29,
+        tokens: 11399998,
       });
 
       // Checkout of total supply
-      let totalSupplied = await token.totalSupply.call();
+      let totalSupplied = await contract.totalSold();
       totalSupplied.should.be.bignumber.equal(
-        ether(41),
-        'Total supply is 41 DTC',
+        ether(17099998),
+        "Total supply is 17'099'998 DTC",
       );
 
       // Buy 5 tokens by 20% cost
@@ -402,17 +409,11 @@ contract('DateCoin Crowdsale', accounts => {
       });
 
       // Checkout of total supply
-      totalSupplied = await token.totalSupply.call();
+      totalSupplied = await contract.totalSold();
       totalSupplied.should.be.bignumber.equal(
-        web3.toWei('45764705882352941176', 'wei'),
-        'Total supply is 45.764705882352941176 DTC',
+        web3.toWei('17100002823529411764705882', 'wei'),
+        "Total supply is 17'100'002.823 DTC",
       );
-
-      //totalSupplied = await token.totalSupply.call();
-      //totalSupplied.should.be.bignumber.equal(
-      //web3.toWei('45705882352941176470', 'wei'),
-      //'Total supply is 45.705882352941177 DTC',
-      //);
     });
 
     it('from 15% to 10% pass', async () => {
@@ -426,14 +427,14 @@ contract('DateCoin Crowdsale', accounts => {
         contract,
         investor,
         saleOff: prices.SALE_15,
-        tokens: 49,
+        tokens: 17099998,
       });
 
       // Checkout of total supply
-      let totalSupplied = await token.totalSupply.call();
+      let totalSupplied = await contract.totalSold();
       totalSupplied.should.be.bignumber.equal(
-        ether(91),
-        'Total supply is 91 DTC',
+        ether(34199998),
+        "Total supply is 34'199'998 DTC",
       );
 
       // Buy 4 tokens by 15% cost
@@ -445,10 +446,10 @@ contract('DateCoin Crowdsale', accounts => {
       });
 
       // Checkout of total supply
-      totalSupplied = await token.totalSupply.call();
+      totalSupplied = await contract.totalSold();
       totalSupplied.should.be.bignumber.equal(
-        web3.toWei('94833333333333333333', 'wei'),
-        'Total supply is 94.833333333333333333 DTC',
+        web3.toWei('34200001888888888888888888', 'wei'),
+        "Total supply is 34'200'001.888 DTC",
       );
     });
 
@@ -463,14 +464,14 @@ contract('DateCoin Crowdsale', accounts => {
         contract,
         investor,
         saleOff: prices.SALE_10,
-        tokens: 69,
+        tokens: 22799996,
       });
 
       // Checkout of total supply
-      let totalSupplied = await token.totalSupply.call();
+      let totalSupplied = await contract.totalSold();
       totalSupplied.should.be.bignumber.equal(
-        ether(161),
-        'Total supply is 161 DTC',
+        ether(56999996),
+        "Total supply is 57'999'996 DTC",
       );
 
       // Buy 8 tokens by 10% cost
@@ -482,10 +483,10 @@ contract('DateCoin Crowdsale', accounts => {
       });
 
       // Checkout of total supply
-      totalSupplied = await token.totalSupply.call();
+      totalSupplied = await contract.totalSold();
       totalSupplied.should.be.bignumber.equal(
-        web3.toWei('168631578947368421052', 'wei'),
-        'Total supply is 168.631578947368421052 DTC',
+        web3.toWei('57000003789473684210526315', 'wei'),
+        "Total supply is 57'000'003.789 DTC",
       );
     });
 
@@ -500,14 +501,14 @@ contract('DateCoin Crowdsale', accounts => {
         contract,
         investor,
         saleOff: prices.SALE_5,
-        tokens: 89,
+        tokens: 28499998,
       });
 
       // Checkout of total supply
-      let totalSupplied = await token.totalSupply.call();
+      let totalSupplied = await contract.totalSold();
       totalSupplied.should.be.bignumber.equal(
-        ether(251),
-        'Total supply is 161 DTC',
+        ether(85499998),
+        "Total supply is 85'499'998 DTC",
       );
 
       // Buy 8 tokens by 0% cost
@@ -519,10 +520,10 @@ contract('DateCoin Crowdsale', accounts => {
       });
 
       // Checkout of total supply
-      totalSupplied = await token.totalSupply.call();
+      totalSupplied = await contract.totalSold();
       totalSupplied.should.be.bignumber.equal(
-        web3.toWei('258650000000000000000', 'wei'),
-        'Total supply is 258.65 DTC',
+        web3.toWei('85500005700000000000000000', 'wei'),
+        "Total supply is 85'500'005.7 DTC",
       );
     });
 
@@ -537,14 +538,14 @@ contract('DateCoin Crowdsale', accounts => {
         contract,
         investor,
         saleOff: prices.PRICE,
-        tokens: 499,
+        tokens: 85500000,
       });
 
       // Checkout of total supply
-      let totalSupplied = await token.totalSupply.call();
+      let totalSupplied = await contract.totalSold();
       totalSupplied.should.be.bignumber.equal(
-        ether(751),
-        'Total supply is 751 DTC',
+        ether(171000000),
+        "Total supply is 171'000'000 DTC",
       );
 
       // Try to buy more than available tokens for ICO
@@ -568,6 +569,9 @@ contract('DateCoin Crowdsale', accounts => {
         'Before getting pre-sale tokens',
       );
 
+      const crowdsaleTokensBefore = await contract.totalSold();
+      const preSaleBalanceBefore = await token.balanceOf(preSale);
+
       // Send customer his pre-sale tokens
       await contract.transferPreSaleTokens(investor, ether(3));
 
@@ -577,43 +581,16 @@ contract('DateCoin Crowdsale', accounts => {
         'After getting pre-sale tokens',
       );
 
-      const delta = await contract.delta.call();
-      delta.should.be.bignumber.equal(ether(3), 'Delta is 3 DTC');
+      const crowdsaleTokensAfter = await contract.totalSold();
+      const preSaleBalanceAfter = await token.balanceOf(preSale);
 
-      const newBorderLine25 = await contract.discountWithDelta.call(25);
-      newBorderLine25.should.be.bignumber.equal(
-        ether(15),
-        "Border-line's moved to 15 DTC to right",
+      crowdsaleTokensBefore.should.be.bignumber.equal(
+        crowdsaleTokensAfter,
+        "Crowdsale balance wasn't changed",
       );
-
-      const newBorderLine20 = await contract.discountWithDelta.call(20);
-      newBorderLine20.should.be.bignumber.equal(
-        ether(45),
-        "Border-line's moved to 45 DTC to right",
-      );
-
-      const newBorderLine15 = await contract.discountWithDelta.call(15);
-      newBorderLine15.should.be.bignumber.equal(
-        ether(95),
-        "Border-line's moved on 95 DTC to right",
-      );
-
-      const newBorderLine10 = await contract.discountWithDelta.call(10);
-      newBorderLine10.should.be.bignumber.equal(
-        ether(165),
-        "Border-line's moved on 165 DTC to right",
-      );
-
-      const newBorderLine5 = await contract.discountWithDelta.call(5);
-      newBorderLine5.should.be.bignumber.equal(
-        ether(255),
-        "Border-line's moved on 255 DTC to right",
-      );
-
-      const icoLimit = await contract.limitWithDelta.call();
-      icoLimit.should.be.bignumber.equal(
-        ether(755),
-        "Border-line's moved on 755 DTC to right",
+      preSaleBalanceAfter.should.be.bignumber.equal(
+        preSaleBalanceBefore - ether(3),
+        'Pre sale balance was changed',
       );
     });
 
@@ -629,29 +606,55 @@ contract('DateCoin Crowdsale', accounts => {
 
       // Send customer more pre-sale limit
       await contract
-        .transferPreSaleTokens(investor, ether(19))
+        .transferPreSaleTokens(investor, ether(preSaleAmount + 1))
         .should.be.rejectedWith(EVMRevert);
     });
   });
 
   describe('Finish ICO', () => {
     beforeEach(async () => {
-      token = await DateCoin.new({ from: owner });
       startTime = latestTime() + duration.weeks(1);
       endTime = startTime + duration.weeks(1);
       afterEndTime = endTime + duration.seconds(1);
+
+      token = await DateCoin.new(ether(cap), { from: owner });
+
+      await token.mint(team, ether(teamAmount));
+      await token.mint(adviser1, ether(adviser1Amount));
+      await token.mint(adviser2, ether(adviser2Amount));
+      await token.mint(bounty, ether(bountyAmount));
+      await token.mint(marketing, ether(marketingAmount));
+      await token.mint(reserved, ether(reservedAmount));
+      await token.mint(preSale, ether(preSaleAmount));
+      await token.mint(crowdsale, ether(crowdsaleAmount));
+      await token.finishMinting();
+
+      const yearReleaseTime = latestTime() + duration.years(1);
+      const halfYearReleaseTime = latestTime() + duration.months(6);
+
+      await token.lockAccount(team, yearReleaseTime);
+      await token.lockAccount(adviser2, halfYearReleaseTime);
+      await token.lockAccount(reserved, halfYearReleaseTime);
+
       contract = await DateCoinCrowdsale.new(
         startTime,
         endTime,
         rate,
-        icoLimit,
-        emission,
         wallet,
-        frozenTokensWallet,
-        teamTokensWallet,
         token.address,
+        crowdsale,
+        preSale,
         { from: owner },
       );
+
+      await token.approve(contract.address, ether(crowdsaleAmount), {
+        from: crowdsale,
+      });
+
+      await token.approve(contract.address, ether(preSaleAmount), {
+        from: preSale,
+      });
+
       await token.transferOwnership(contract.address);
     });
 
@@ -669,12 +672,15 @@ contract('DateCoin Crowdsale', accounts => {
 
       const afterBalance = await web3.eth.getBalance(wallet);
 
-      const diff = afterBalance - beforeBalance;
+      const diff = web3.toBigNumber(afterBalance - beforeBalance);
 
-      diff.should.be.bignumber.equal(ether(0.181), 'You earn 0.181 ETH');
+      diff.should.be.bignumber.equal(
+        web3.toBigNumber('40256250000003910000000'),
+        "You earn 40'256.25000000391 ETH",
+      );
     });
 
-    it('transfer tokens left', async () => {
+    it('should burn left tokens', async () => {
       await increaseTimeTo(startTime);
       const investor = accounts[2];
 
@@ -690,47 +696,20 @@ contract('DateCoin Crowdsale', accounts => {
       const isEnded = await contract.hasEnded.call();
       isEnded.should.equal(true, 'ICO has ended by end time');
 
-      await contract.transferUnsoldTokens();
-
-      const frozenTokensBalance = await token.balanceOf.call(
-        frozenTokensWallet,
+      const balanceBefore = await token.balanceOf(crowdsale);
+      assert.notEqual(
+        balanceBefore.valueOf(),
+        ether(0).valueOf(),
+        'Balance not empty',
       );
 
-      frozenTokensBalance.should.be.bignumber.equal(
-        ether(742),
-        '743 DTC have been frozen',
-      );
-    });
+      await contract.burnLeftTokens();
 
-    it('transfer team tokens', async () => {
-      await increaseTimeTo(startTime);
-      const investor = accounts[2];
-
-      await _sendTokens({
-        contract,
-        investor,
-        saleOff: prices.SALE_25,
-        tokens: 10,
-      });
-
-      await contract.transferPreSaleTokens(accounts[3], ether(12));
-
-      await increaseTimeTo(afterEndTime);
-
-      const isEnded = await contract.hasEnded.call();
-      isEnded.should.equal(true, 'ICO has ended by end time');
-
-      await contract.transferTeamTokens();
-
-      const limitWithDelta = await contract.limitWithDelta.call();
-
-      const teamTokensBalance = await token.balanceOf.call(teamTokensWallet);
-
-      const teamTokens = ether(1150) - limitWithDelta;
-
-      teamTokensBalance.should.be.bignumber.equal(
-        teamTokens,
-        `Team tokens is ${web3.fromWei(teamTokens, 'ether')}`,
+      const balanceAfter = await token.balanceOf(crowdsale);
+      assert.equal(
+        balanceAfter.valueOf(),
+        ether(0).valueOf(),
+        'Balance is empty',
       );
     });
 
@@ -751,5 +730,4 @@ contract('DateCoin Crowdsale', accounts => {
       );
     });
   });
-  */
 });
