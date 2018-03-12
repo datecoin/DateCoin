@@ -13,7 +13,7 @@ module.exports = {
       port: 8545,
       from: '0x8156b4E0909e80eeE5CfaA5F15FC91975556740F', // default address to use for any transaction Truffle makes during migrations
       network_id: 4,
-      gas: 6736984,
+      gas: 3000000,
     },
   },
 };

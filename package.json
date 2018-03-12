@@ -5,7 +5,7 @@
   "author": "Alexander Ustinov <rusfearuth@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "runserver": "yarn testrpc --port 7545",
+    "runserver": "yarn testrpc --accounts 20 --port 7545",
     "build": "rm -rf build && yarn truffle compile",
     "pretest": "yarn build && yarn truffle migrate --reset --network development",
     "test": "yarn truffle test --network development",

@@ -25,7 +25,6 @@ const should = require('chai')
 
 contract('DateCoin Crowdsale', accounts => {
   const owner = accounts[0];
-  const wallet = accounts[9];
   const frozenTokensWallet = accounts[8];
   const teamTokensWallet = accounts[7];
   let contract = null;
@@ -36,8 +35,20 @@ contract('DateCoin Crowdsale', accounts => {
   let afterEndTime = 0;
   const rate = 4000;
   // Only for testing
+  const cap = web3.toBigNumber(290769231);
   const icoLimit = 752;
   const emission = 1150;
+
+  // Accounts
+  const team = accounts[19];
+  const adviser1 = accounts[18];
+  const adviser2 = accounts[17];
+  const bounty = accounts[16];
+  const marketing = accounts[15];
+  const reserved = accounts[14];
+  const preSale = accounts[13];
+  const crowdsale = accounts[12];
+  const wallet = accounts[11];
 
   before(async () => await advanceBlock());
 
@@ -45,19 +56,58 @@ contract('DateCoin Crowdsale', accounts => {
     startTime = latestTime() + duration.weeks(1);
     endTime = startTime + duration.weeks(1);
     afterEndTime = endTime + duration.seconds(1);
-    token = await DateCoin.new({ from: owner });
+
+    token = await DateCoin.new(cap, { from: owner });
+
+    // 34 892 307
+    const teamAmount = 34892307;
+    // 11 630 769
+    const adviser1Amount = 11630769;
+    // 11 630 769
+    const adviser2Amount = 11630769;
+    // 2 907 692
+    const bountyAmount = 2907692;
+    // 11 630 769
+    const marketingAmount = 11630769;
+    // +29 076 923
+    const reservedAmount = 29076924;
+    // 18 000 000
+    const preSaleAmount = 18000000;
+    // 171 000 000
+    const crowdsaleAmount = 171000000;
+    // 189 000 000
+    // Total: 290 769 230
+
+    await token.mint(team, teamAmount);
+    await token.mint(adviser1, adviser1Amount);
+    await token.mint(adviser2, adviser2Amount);
+    await token.mint(bounty, bountyAmount);
+    await token.mint(marketing, marketingAmount);
+    await token.mint(reserved, reservedAmount);
+    await token.mint(preSale, preSaleAmount);
+    await token.mint(crowdsale, crowdsaleAmount);
+    await token.finishMinting();
+
+    const yearReleaseTime = latestTime() + duration.years(1);
+    const halfYearReleaseTime = latestTime() + duration.months(6);
+
+    await token.lockAccount(team, yearReleaseTime);
+    await token.lockAccount(adviser2, halfYearReleaseTime);
+    await token.lockAccount(reserved, halfYearReleaseTime);
+
     contract = await DateCoinCrowdsale.new(
       startTime,
       endTime,
       rate,
-      icoLimit,
-      emission,
       wallet,
-      frozenTokensWallet,
-      teamTokensWallet,
       token.address,
+      crowdsale,
+      preSale,
       { from: owner },
     );
+
+    await token.approve(contract.address, crowdsaleAmount);
+
     await token.transferOwnership(contract.address);
   });
 
@@ -82,13 +132,13 @@ contract('DateCoin Crowdsale', accounts => {
 
       fundWallet.should.equal(wallet, 'Funds wallet');
 
-      const frozenWallet = await contract.frozenWallet.call();
+      const vaultWallet = await contract.vault.call();
 
-      frozenWallet.should.equal(frozenTokensWallet, 'Frozen tokens wallet');
+      vaultWallet.should.equal(crowdsale, 'Vault tokens wallet');
 
-      const teamWallet = await contract.teamWallet.call();
+      const preSaleWallet = await contract.preSaleVault.call();
 
-      teamWallet.should.equal(teamTokensWallet, 'Team tokens wallet');
+      preSaleWallet.should.equal(preSale, 'PreSale tokens wallet');
     });
 
     it('wallet balances', async () => {
@@ -101,26 +151,16 @@ contract('DateCoin Crowdsale', accounts => {
         "Team doesn't have any tokens",
       );
     });
-
-    it('check limits && decimals', async () => {
-      const _icoLimit = await contract.icoLimit.call();
-      _icoLimit.should.be.bignumber.equal(ether(752), 'ICO cap is 752');
-
-      const decimals = await contract.decimals.call();
-      decimals.should.be.bignumber.equal(
-        web3.toBigNumber(18),
-        'Token decimals is 18',
-      );
-
-      const _emission = await contract.emission.call();
-      _emission.should.be.bignumber.equal(
-        ether(1150),
-        'Total emission is 1150',
-      );
-    });
   });
 
   describe('Normal buying cases', () => {
+    it('totalSupply', async () => {
+      console.log(await contract.testA());
+      console.log(await contract.balanceOf());
+      const tokensss = await contract.testBuy();
+      console.log(tokensss);
+    });
+
     it('buy tokens by 25% sale off', async () => {
       await increaseTimeTo(startTime);
       const investor = accounts[1];
@@ -166,6 +206,7 @@ contract('DateCoin Crowdsale', accounts => {
         .should.equal(expected.valueOf(), 'Total supply is 6.7 DTC');
     });
 
+    /*
     it('buy tokens by 20% sale off', async () => {
       await increaseTimeTo(startTime);
       const investor = accounts[3];
@@ -281,8 +322,10 @@ contract('DateCoin Crowdsale', accounts => {
         .valueOf()
         .should.equal(expected.valueOf(), 'Total supply is 255 DTC');
     });
+    */
   });
 
+  /*
   describe('Border-line buying cases', () => {
     it('from 25% to 20% pass', async () => {
       await increaseTimeTo(startTime);
@@ -708,4 +751,5 @@ contract('DateCoin Crowdsale', accounts => {
       );
     });
   });
+  */
 });
