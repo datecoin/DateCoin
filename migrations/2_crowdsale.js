@@ -38,9 +38,6 @@ module.exports = async function(deployer, network, accounts) {
         _preSaleVault,
       );
 
-      // Then, we create BuyBack contract
-      await deployer.deploy(DateCoinBuyBackTestable, _tokenContractAddress);
-
       // And transfer ownership to Crowdsale
       await token.transferOwnership(DateCoinCrowdsaleTestable.address);
     } catch (e) {
