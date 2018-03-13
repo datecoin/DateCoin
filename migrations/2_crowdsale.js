@@ -4,9 +4,6 @@ var DateCoin = artifacts.require('./DateCoin.sol');
 var DateCoinCrowdsaleTestable = artifacts.require(
   './testable/DateCoinCrowdsaleTestable.sol',
 );
-var DateCoinBuyBackTestable = artifacts.require(
-  './testable/DateCoinBuyBackTestable.sol',
-);
 
 module.exports = async function(deployer, network, accounts) {
   if (
@@ -18,12 +15,8 @@ module.exports = async function(deployer, network, accounts) {
       const owner = accounts[0];
 
       // First of all we need to deploy DateCoin contract
-      await deployer.deploy(DateCoin, 290769231);
+      await deployer.deploy(DateCoin, 290769230);
       const token = await DateCoin.deployed();
-
-      //const totalEmission = 290769230;
-      //await token.mint(owner, totalEmission);
-      //await token.finishMinting();
 
       // Then, we create Crowdsale contract
       // Params

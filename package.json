@@ -11,7 +11,7 @@
     "pretest": "yarn build && yarn truffle migrate --reset --network development",
     "test": "yarn truffle test --network development",
     "deploy-rinkeby": "rm -rf build/ && yarn truffle compile && yarn truffle migrate --network rinkeby && yarn truffle-flattener contracts/DateCoinCrowdsale.sol",
-    "predeploy": "rm -rf deploy/ && mkdir -vp deploy/ && node_modules/.bin/truffle-flattener contracts/DateCoin.sol > deploy/DateCoin.full.sol && node_modules/.bin/truffle-flattener contracts/DateCoinCrowdsale.sol > deploy/DateCoinCrowdsale.full.sol && node_modules/.bin/truffle-flattener contracts/DateCoinBuyBack.sol > deploy/DateCoinBuyBack.full.sol"
+    "predeploy": "rm -rf deploy/ && mkdir -vp deploy/ && node_modules/.bin/truffle-flattener contracts/DateCoin.sol > deploy/DateCoin.full.sol && node_modules/.bin/truffle-flattener contracts/DateCoinCrowdsale.sol > deploy/DateCoinCrowdsale.full.sol"
   },
   "devDependencies": {
     "babel-polyfill": "^6.26.0",
