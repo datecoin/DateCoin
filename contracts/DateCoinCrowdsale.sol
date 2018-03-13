@@ -9,17 +9,22 @@ import 'zeppelin-solidity/contracts/crowdsale/Crowdsale.sol';
 import 'zeppelin-solidity/contracts/ownership/Ownable.sol';
 
 contract DateCoinCrowdsale is Crowdsale, Ownable {
+  enum ManualState {
+    WORKING, READY, NONE
+  }
 
   uint256 public decimals = 18;
   uint256 public emission;
 
   // Discount border-lines
   mapping(uint8 => uint256) discountTokens;
+  mapping(address => uint256) pendingOrders;
 
-  // New
   uint256 public totalSupply;
   address public vault;
   address public preSaleVault;
+  ManualState public manualState = ManualState.NONE;
+  bool public disabled = true;
 
   function DateCoinCrowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet, address _tokenContractAddress, address _vault, address _preSaleVault) public
     Crowdsale(_startTime, _endTime, _rate, _wallet)
@@ -41,6 +46,12 @@ contract DateCoinCrowdsale is Crowdsale, Ownable {
   function buyTokens(address beneficiary) public payable {
     require(beneficiary != address(0));
     require(validPurchase());
+
+    if (disabled) {
+      pendingOrders[msg.sender] = pendingOrders[msg.sender] + msg.value;
+      forwardFunds();
+      return;
+    }
 
     uint256 weiAmount = msg.value;
     uint256 sold = totalSold();
@@ -118,7 +129,12 @@ contract DateCoinCrowdsale is Crowdsale, Ownable {
     * @return true if investors can buy at the moment
     */
   function validPurchase() internal view returns(bool) {
-    return super.validPurchase() && token.balanceOf(vault) > 0;
+    uint256 weiValue = msg.value;
+
+    bool defaultCase = super.validPurchase();
+    bool capCase = token.balanceOf(vault) > 0;
+    bool extraCase = weiValue != 0 && capCase && manualState == ManualState.WORKING;
+    return defaultCase && capCase || extraCase;
   }
 
   /** 
@@ -126,6 +142,12 @@ contract DateCoinCrowdsale is Crowdsale, Ownable {
     * @return true if crowdsale event has ended
     */
   function hasEnded() public view returns (bool) {
+    if (manualState == ManualState.WORKING) {
+      return false;
+    }
+    else if (manualState == ManualState.READY) {
+      return true;
+    }
     bool icoLimitReached = token.balanceOf(vault) == 0;
     return super.hasEnded() || icoLimitReached;
   }
@@ -139,6 +161,60 @@ contract DateCoinCrowdsale is Crowdsale, Ownable {
 
     DateCoin dateCoin = DateCoin(token);
     dateCoin.burnFrom(vault, tokens);
+  }
+
+  /**
+    * @dev this method allows to finish crowdsale prematurely
+    */
+  function finishCrowdsale() public onlyOwner {
+    manualState = ManualState.READY;
+  }
+
+
+  /**
+    * @dev this method allows to start crowdsale prematurely
+    */
+  function startCrowdsale() public onlyOwner {
+    manualState = ManualState.WORKING;
+  }
+
+  /**
+    * @dev this method allows to drop manual state of contract 
+    */
+  function dropManualState() public onlyOwner {
+    manualState = ManualState.NONE;
+  }
+
+  /**
+    * @dev disable automatically seller
+    */
+  function disableAutoSeller() public onlyOwner {
+    disabled = true;
+  }
+
+  /**
+    * @dev enable automatically seller
+    */
+  function enableAutoSeller() public onlyOwner {
+    disabled = false;
+  }
+
+  /**
+    * @dev this method is used for getting information about account pending orders
+    * @param _account which is checked
+    * @return has or not
+    */
+  function hasAccountPendingOrders(address _account) public view returns(bool) {
+    return pendingOrders[_account] > 0;
+  }
+
+  /**
+    * @dev this method is used for getting account pending value
+    * @param _account which is checked
+    * @return if account doesn't have any pending orders, it will return 0
+    */
+  function getAccountPendingValue(address _account) public view returns(uint256) {
+    return pendingOrders[_account];
   }
 
   function _discount(uint8 _percent) internal view returns (uint256) {

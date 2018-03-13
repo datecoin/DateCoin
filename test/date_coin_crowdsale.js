@@ -170,9 +170,121 @@ contract('DateCoin Crowdsale', accounts => {
     });
   });
 
+  describe('AutoSeller', () => {
+    it('should enable auto seller', async () => {
+      await increaseTimeTo(startTime);
+      await contract.enableAutoSeller();
+      const investor = accounts[1];
+
+      // Checkout of investor balance before buying
+      const beforeBalance = await token.balanceOf.call(investor);
+      beforeBalance
+        .valueOf()
+        .should.equal(String(0), 'Balance of investor is empty');
+
+      // Buy 1.5 tokens
+      let value = web3.toBigNumber(1.5) * ether(prices.SALE_25);
+      await contract.sendTransaction({
+        from: investor,
+        value,
+      });
+
+      // Checkout of investor balance after buying
+      const investorBalance = await token.balanceOf.call(investor);
+      let expected = web3.fromWei(ether(1.5), 'ether');
+      web3
+        .fromWei(investorBalance.valueOf(), 'ether')
+        .valueOf()
+        .should.equal(expected.valueOf(), 'Balance of investor is 1.5 DTC');
+    });
+
+    it('should disable auto seller', async () => {
+      await increaseTimeTo(startTime);
+      await contract.disableAutoSeller();
+      const investor = accounts[1];
+
+      // Checkout of investor balance before buying
+      const beforeBalance = await token.balanceOf.call(investor);
+      beforeBalance
+        .valueOf()
+        .should.equal(String(0), 'Balance of investor is empty');
+
+      // Buy 1.5 tokens
+      let value = web3.toBigNumber(1.5) * ether(prices.SALE_25);
+      await contract.sendTransaction({
+        from: investor,
+        value,
+      });
+
+      // Checkout of investor balance after buying
+      const investorBalance = await token.balanceOf.call(investor);
+      let expected = web3.fromWei(ether(0), 'ether');
+      web3
+        .fromWei(investorBalance.valueOf(), 'ether')
+        .valueOf()
+        .should.equal(expected.valueOf(), 'Balance of investor is 1.5 DTC');
+    });
+
+    it('should contain pending orders info for account', async () => {
+      await increaseTimeTo(startTime);
+      await contract.disableAutoSeller();
+      const investor = accounts[1];
+
+      // Buy 1.5 tokens
+      let value = web3.toBigNumber(1) * ether(prices.SALE_25);
+      await contract.sendTransaction({
+        from: investor,
+        value,
+      });
+
+      const hasPendingOrders = await contract.hasAccountPendingOrders(investor);
+
+      assert.equal(hasPendingOrders, true, 'Investor has pending orders');
+
+      const pendingOrders = await contract.getAccountPendingValue(investor);
+      let expected = web3.fromWei(ether(0.0001875), 'ether');
+      web3
+        .fromWei(pendingOrders.valueOf(), 'ether')
+        .valueOf()
+        .should.equal(
+          expected.valueOf(),
+          'Pending value of investor is 0.0001875 ETH',
+        );
+    });
+
+    it('should not contain pending orders on enabled', async () => {
+      await increaseTimeTo(startTime);
+      await contract.enableAutoSeller();
+      const investor = accounts[1];
+
+      // Buy 1.5 tokens
+      let value = web3.toBigNumber(1) * ether(prices.SALE_25);
+      await contract.sendTransaction({
+        from: investor,
+        value,
+      });
+
+      const hasPendingOrders = await contract.hasAccountPendingOrders(investor);
+
+      assert.equal(
+        hasPendingOrders,
+        false,
+        "Investor hasn't got pending orders",
+      );
+
+      const pendingOrders = await contract.getAccountPendingValue(investor);
+      let expected = web3.fromWei(ether(0), 'ether');
+      web3
+        .fromWei(pendingOrders.valueOf(), 'ether')
+        .valueOf()
+        .should.equal(expected.valueOf(), 'Pending value of investor is 0 ETH');
+    });
+  });
+
   describe('Normal buying cases', () => {
     it('buy tokens by 25% sale off', async () => {
       await increaseTimeTo(startTime);
+      await contract.enableAutoSeller();
       const investor = accounts[1];
 
       // Checkout of contract isn't ended
@@ -218,6 +330,7 @@ contract('DateCoin Crowdsale', accounts => {
 
     it('buy tokens by 20% sale off', async () => {
       await increaseTimeTo(startTime);
+      await contract.enableAutoSeller();
       const investor = accounts[3];
 
       await _passDiaposons({ contract, token, investor, to: 20 });
@@ -242,6 +355,7 @@ contract('DateCoin Crowdsale', accounts => {
 
     it('buy tokens by 15% sale off', async () => {
       await increaseTimeTo(startTime);
+      await contract.enableAutoSeller();
       const investor = accounts[4];
 
       await _passDiaposons({ contract, investor, token, to: 15 });
@@ -265,6 +379,7 @@ contract('DateCoin Crowdsale', accounts => {
 
     it('buy tokens by 10% sale off', async () => {
       await increaseTimeTo(startTime);
+      await contract.enableAutoSeller();
       const investor = accounts[5];
 
       await _passDiaposons({ contract, investor, token, to: 10 });
@@ -288,6 +403,7 @@ contract('DateCoin Crowdsale', accounts => {
 
     it('buy tokens by 5% sale off', async () => {
       await increaseTimeTo(startTime);
+      await contract.enableAutoSeller();
       const investor = accounts[6];
 
       await _passDiaposons({ contract, investor, token, to: 5 });
@@ -311,6 +427,7 @@ contract('DateCoin Crowdsale', accounts => {
 
     it('buy tokens by 0% sale off', async () => {
       await increaseTimeTo(startTime);
+      await contract.enableAutoSeller();
       const investor = accounts[7];
 
       await _passDiaposons({ contract, investor, token, to: 0 });
@@ -336,6 +453,7 @@ contract('DateCoin Crowdsale', accounts => {
   describe('Border-line buying cases', () => {
     it('from 25% to 20% pass', async () => {
       await increaseTimeTo(startTime);
+      await contract.enableAutoSeller();
       const investor = accounts[1];
 
       // Checkout of contract isn't ended
@@ -381,6 +499,7 @@ contract('DateCoin Crowdsale', accounts => {
 
     it('from 20% to 15% pass', async () => {
       await increaseTimeTo(startTime);
+      await contract.enableAutoSeller();
       const investor = accounts[2];
 
       await _passDiaposons({ contract, investor, token, to: 20 });
@@ -418,6 +537,7 @@ contract('DateCoin Crowdsale', accounts => {
 
     it('from 15% to 10% pass', async () => {
       await increaseTimeTo(startTime);
+      await contract.enableAutoSeller();
       const investor = accounts[3];
 
       await _passDiaposons({ contract, investor, token, to: 15 });
@@ -455,6 +575,7 @@ contract('DateCoin Crowdsale', accounts => {
 
     it('from 10% to 5% pass', async () => {
       await increaseTimeTo(startTime);
+      await contract.enableAutoSeller();
       const investor = accounts[4];
 
       await _passDiaposons({ contract, investor, token, to: 10 });
@@ -492,6 +613,7 @@ contract('DateCoin Crowdsale', accounts => {
 
     it('from 5% to 0% pass', async () => {
       await increaseTimeTo(startTime);
+      await contract.enableAutoSeller();
       const investor = accounts[5];
 
       await _passDiaposons({ contract, investor, token, to: 5 });
@@ -529,6 +651,7 @@ contract('DateCoin Crowdsale', accounts => {
 
     it('checkout of ICO limit', async () => {
       await increaseTimeTo(startTime);
+      await contract.enableAutoSeller();
       const investor = accounts[5];
 
       await _passDiaposons({ contract, investor, token, to: 0 });
@@ -611,6 +734,150 @@ contract('DateCoin Crowdsale', accounts => {
     });
   });
 
+  describe('Manual start/finish control', () => {
+    it('should start before startTime', async () => {
+      await increaseTimeTo(latestTime());
+      const investor = accounts[1];
+
+      // Checkout of contract isn't ended
+      let isStarted = await contract.hasStarted();
+      isStarted.should.equal(false, "ICO isn't started yet");
+
+      await contract.startCrowdsale();
+
+      isStarted = await contract.hasStarted();
+      isStarted.should.equal(true, 'ICO is started');
+    });
+
+    it('should finish at the middle of period', async () => {
+      await increaseTimeTo(startTime);
+      const investor = accounts[1];
+
+      // Checkout of contract isn't ended
+      let isEnded = await contract.hasEnded.call();
+      isEnded.should.equal(false, "ICO isn't finished yet");
+
+      await contract.finishCrowdsale();
+
+      isEnded = await contract.hasEnded.call();
+      isEnded.should.equal(true, 'ICO is finished');
+    });
+
+    it('should start after endTime', async () => {
+      await increaseTimeTo(endTime + duration.days(1));
+      const investor = accounts[1];
+
+      // Checkout of contract isn't ended
+      let isEnded = await contract.hasEnded();
+      isEnded.should.equal(true, 'ICO is finished');
+
+      await contract.startCrowdsale();
+
+      isEnded = await contract.hasEnded();
+      isEnded.should.equal(false, 'ICO was started again');
+    });
+
+    it('should sell tokens before startTime and enough vault balance', async () => {
+      await increaseTimeTo(latestTime());
+      await contract.enableAutoSeller();
+      const investor = accounts[1];
+
+      // Checkout of contract isn't ended
+      let isStarted = await contract.hasStarted();
+      isStarted.should.equal(false, "ICO isn't started");
+
+      await contract.startCrowdsale();
+
+      let balance = await token.balanceOf(investor);
+      balance.should.be.bignumber.equal(
+        ether(0),
+        'Investor balance before transaction',
+      );
+
+      await contract.sendTransaction({
+        from: investor,
+        value: ether('0.0001875'),
+      });
+
+      balance = await token.balanceOf(investor);
+      balance.should.be.bignumber.equal(ether(1), 'Investor bought 1 DTC');
+    });
+
+    it('should revert sell tokens before startTime and not enough vault balance', async () => {
+      await increaseTimeTo(latestTime());
+      await contract.enableAutoSeller();
+      const investor = accounts[1];
+
+      // Checkout of contract isn't ended
+      let isStarted = await contract.hasStarted();
+      isStarted.should.equal(false, "ICO isn't started");
+
+      await contract.startCrowdsale();
+
+      await _sellAllTokens({ contract, investor, token });
+
+      await contract
+        .sendTransaction({
+          from: investor,
+          value: ether('0.00001875'),
+        })
+        .should.be.rejectedWith(EVMRevert);
+    });
+
+    it('should sell tokens after endTime and enough vault balance', async () => {
+      await increaseTimeTo(endTime + duration.days(1));
+      await contract.enableAutoSeller();
+      const investor = accounts[1];
+
+      // Checkout of contract isn't ended
+      let isEnded = await contract.hasEnded();
+      isEnded.should.equal(true, 'ICO is finished');
+
+      await contract.startCrowdsale();
+
+      isEnded = await contract.hasEnded();
+      isEnded.should.equal(false, 'ICO was started again');
+
+      let balance = await token.balanceOf(investor);
+      balance.should.be.bignumber.equal(
+        ether(0),
+        'Investor balance before transaction',
+      );
+
+      await contract.sendTransaction({
+        from: investor,
+        value: ether('0.0001875'),
+      });
+
+      balance = await token.balanceOf(investor);
+      balance.should.be.bignumber.equal(ether(1), 'Investor bought 1 DTC');
+    });
+
+    it('should revert sell tokens before startTime and not enough vault balance', async () => {
+      await increaseTimeTo(endTime + duration.days(1));
+      await contract.enableAutoSeller();
+      const investor = accounts[1];
+
+      // Checkout of contract isn't ended
+      let isEnded = await contract.hasEnded();
+      isEnded.should.equal(true, 'ICO is finished');
+
+      await contract.startCrowdsale();
+
+      isEnded = await contract.hasEnded();
+      isEnded.should.equal(false, 'ICO was started again');
+
+      await _sellAllTokens({ contract, investor, token });
+
+      await contract
+        .sendTransaction({
+          from: investor,
+          value: ether('0.00001875'),
+        })
+        .should.be.rejectedWith(EVMRevert);
+    });
+  });
+
   describe('Finish ICO', () => {
     beforeEach(async () => {
       startTime = latestTime() + duration.weeks(1);
@@ -660,6 +927,7 @@ contract('DateCoin Crowdsale', accounts => {
 
     it('fund balance', async () => {
       await increaseTimeTo(startTime);
+      await contract.enableAutoSeller();
       const investor = accounts[2];
 
       const beforeBalance = await web3.eth.getBalance(wallet);

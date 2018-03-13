@@ -25,6 +25,10 @@ contract DateCoinCrowdsaleTestable is DateCoinCrowdsale {
     return _discount(_percent);
   }
 
+  function hasStarted() public view returns (bool) {
+    return startTime <= now || manualState == ManualState.WORKING;
+  }
+
   function calculateTokens(uint256 _tokens, uint8 _percent, uint256 _totalSupplied) public view returns (uint256) {
     return _calculateTokens(_tokens, _percent, _totalSupplied);
   }

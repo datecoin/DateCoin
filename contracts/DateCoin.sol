@@ -49,6 +49,16 @@ contract DateCoin is CappedToken, BurnableToken {
     timeLocks[_account] = _releaseTime;
   }
 
+  /**
+    * @dev unlock special account balance 
+    * @param _account The account address will be unlocked
+    */
+  function unlockAccount(address _account) public onlyOwner {
+    require(_account != address(0));
+    require(now < timeLocks[_account]);
+
+    timeLocks[_account] = 0;
+  }
 
   /**
     * @dev check account is lock or not

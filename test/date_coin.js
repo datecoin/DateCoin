@@ -528,6 +528,31 @@ contract('DateCoin', addresses => {
       const result = await instance.isAccountLocked(tokenOwner);
       assert.equal(false, result, "Account isn't locked");
     });
+
+    it('should unlock account which was locked before', async () => {
+      const releaseTime = latestTime() + duration.days(1);
+
+      await instance.lockAccount(anotherAccount, releaseTime);
+
+      await assertRevert(
+        instance.burnFrom(anotherAccount, 99, { from: tokenOwner }),
+        'Burn anotherAccount tokens by contract owner',
+      );
+
+      await instance.unlockAccount(anotherAccount);
+
+      const isAccountLocked = await instance.isAccountLocked(anotherAccount);
+      assert.equal(false, isAccountLocked, 'Account is unlocked');
+
+      await instance.burnFrom(anotherAccount, 99, { from: tokenOwner });
+      const balance = await instance.balanceOf(anotherAccount);
+
+      assert.equal(
+        web3.toBigNumber(1).valueOf(),
+        balance.valueOf(),
+        'Another account has 1 DTC',
+      );
+    });
   });
 
   describe('Production deploy scenario', () => {
