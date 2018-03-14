@@ -13,7 +13,7 @@ contract DateCoinCrowdsale is Crowdsale, Ownable {
     WORKING, READY, NONE
   }
 
-  uint256 public decimals = 18;
+  uint256 public decimals;
   uint256 public emission;
 
   // Discount border-lines
@@ -48,7 +48,7 @@ contract DateCoinCrowdsale is Crowdsale, Ownable {
     require(validPurchase());
 
     if (disabled) {
-      pendingOrders[msg.sender] = pendingOrders[msg.sender] + msg.value;
+      pendingOrders[msg.sender] = pendingOrders[msg.sender].add(msg.value);
       forwardFunds();
       return;
     }
