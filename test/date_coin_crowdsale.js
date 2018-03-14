@@ -89,9 +89,9 @@ contract('DateCoin Crowdsale', accounts => {
     const yearReleaseTime = latestTime() + duration.years(1);
     const halfYearReleaseTime = latestTime() + duration.months(6);
 
-    await token.lockAccount(team, yearReleaseTime);
-    await token.lockAccount(adviser2, halfYearReleaseTime);
-    await token.lockAccount(reserved, halfYearReleaseTime);
+    // TODO: lock team balance for year
+    // TODO: lock adviser2 for 6 months
+    // TODO: lock reserved for 6 months
 
     contract = await DateCoinCrowdsale.new(
       startTime,
@@ -899,9 +899,9 @@ contract('DateCoin Crowdsale', accounts => {
       const yearReleaseTime = latestTime() + duration.years(1);
       const halfYearReleaseTime = latestTime() + duration.months(6);
 
-      await token.lockAccount(team, yearReleaseTime);
-      await token.lockAccount(adviser2, halfYearReleaseTime);
-      await token.lockAccount(reserved, halfYearReleaseTime);
+      // TODO: lock team balance for year
+      // TODO: lock adviser2 for 6 months
+      // TODO: lock reserved for 6 months
 
       contract = await DateCoinCrowdsale.new(
         startTime,

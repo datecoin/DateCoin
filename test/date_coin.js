@@ -377,92 +377,9 @@ contract('DateCoin', addresses => {
     const anotherAccount = addresses[2];
     beforeEach(async () => {
       instance = await DateCoin.new(cap, { from: tokenOwner });
-      await instance.mint(anotherAccount, 100);
     });
 
-    it('should revert transfer', async () => {
-      const releaseTime = latestTime() + duration.weeks(1);
-      await instance.lockAccount(anotherAccount, releaseTime);
-
-      await assertRevert(
-        instance.transfer(addresses[9], 10, { from: anotherAccount }),
-        'Revert transfer of locked account',
-      );
-
-      await increaseTimeTo(releaseTime + duration.days(15));
-
-      await instance.transfer(addresses[9], 10, { from: anotherAccount });
-
-      const balance = await instance.balanceOf(anotherAccount);
-      assert.equal(
-        web3.toBigNumber(90).valueOf(),
-        balance,
-        'Balance of anotherAccount is 90',
-      );
-    });
-
-    it('should revert transferFrom', async () => {
-      const allowedAccount = addresses[5];
-      await instance.approve(allowedAccount, 50, { from: anotherAccount });
-
-      const releaseTime = latestTime() + duration.days(1);
-      await instance.lockAccount(anotherAccount, releaseTime);
-
-      await assertRevert(
-        instance.transferFrom(anotherAccount, addresses[7], 35, {
-          from: allowedAccount,
-        }),
-        'Revert transfer of locked account',
-      );
-
-      await increaseTimeTo(releaseTime + duration.days(5));
-
-      await instance.transferFrom(anotherAccount, addresses[7], 35, {
-        from: allowedAccount,
-      });
-
-      const balance = await instance.balanceOf(anotherAccount);
-      assert.equal(
-        web3.toBigNumber(65).valueOf(),
-        balance,
-        'Balance of anotherAccount is 65',
-      );
-    });
-
-    it('should revert burn', async () => {
-      const releaseTime = latestTime() + duration.years(1);
-      await instance.lockAccount(anotherAccount, releaseTime);
-
-      await assertRevert(
-        instance.burn(11, { from: anotherAccount }),
-        'Burn my own tokens',
-      );
-
-      await increaseTimeTo(releaseTime + duration.days(1));
-
-      await instance.burn(11, { from: anotherAccount });
-
-      const balance = await instance.balanceOf.call(anotherAccount);
-      assert.equal(
-        89,
-        balance.valueOf(),
-        'Balance of anotherAccount after burn is 89',
-      );
-    });
-
-    it('should show true if account is locked', async () => {
-      const releaseTime = latestTime() + duration.weeks(1);
-      await instance.lockAccount(anotherAccount, releaseTime);
-
-      const result = await instance.isAccountLocked(anotherAccount);
-
-      assert.equal(true, result, 'Account is locked');
-    });
-
-    it("should show false if account isn't locked", async () => {
-      const result = await instance.isAccountLocked(tokenOwner);
-      assert.equal(false, result, "Account isn't locked");
-    });
+    // TODO: add tests for TokenTimelock
   });
 
   describe('Production deploy scenario', () => {
@@ -526,9 +443,9 @@ contract('DateCoin', addresses => {
       const yearReleaseTime = latestTime() + duration.years(1);
       const halfYearReleaseTime = latestTime() + duration.months(6);
 
-      await internalToken.lockAccount(team, yearReleaseTime);
-      await internalToken.lockAccount(adviser2, halfYearReleaseTime);
-      await internalToken.lockAccount(reserved, halfYearReleaseTime);
+      // TODO: lock team balance for year
+      // TODO: lock adviser2 for 6 months
+      // TODO: lock reserved for 6 months
 
       const totalSupplied = await internalToken.totalSupply();
       assert.equal(
