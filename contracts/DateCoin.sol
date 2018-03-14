@@ -19,13 +19,6 @@ contract DateCoin is CappedToken, BurnableToken {
     super.burn(_value);
   }
 
-  function burnFrom(address _from, uint256 _value) public onlyOwner onlyUnlocked(_from) {
-    require(_value <= balances[_from]);
-    balances[_from] = balances[_from].sub(_value);
-    totalSupply = totalSupply.sub(_value);
-    Burn(_from, _value);
-  }
-
   // Override transferFrom of super contract 
   function transferFrom(address _from, address _to, uint256 _value) public onlyUnlocked(_from) returns (bool) {
     return super.transferFrom(_from, _to, _value);

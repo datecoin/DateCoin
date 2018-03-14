@@ -152,17 +152,6 @@ contract DateCoinCrowdsale is Crowdsale, Ownable {
     return super.hasEnded() || icoLimitReached;
   }
 
-  function burnLeftTokens() public onlyOwner {
-    require(super.hasEnded());
-
-    uint256 tokens = token.balanceOf(vault);
-
-    require(tokens > 0);
-
-    DateCoin dateCoin = DateCoin(token);
-    dateCoin.burnFrom(vault, tokens);
-  }
-
   /**
     * @dev this method allows to finish crowdsale prematurely
     */

@@ -948,39 +948,6 @@ contract('DateCoin Crowdsale', accounts => {
       );
     });
 
-    it('should burn left tokens', async () => {
-      await increaseTimeTo(startTime);
-      const investor = accounts[2];
-
-      await _sendTokens({
-        contract,
-        investor,
-        saleOff: prices.SALE_25,
-        tokens: 10,
-      });
-
-      await increaseTimeTo(afterEndTime);
-
-      const isEnded = await contract.hasEnded.call();
-      isEnded.should.equal(true, 'ICO has ended by end time');
-
-      const balanceBefore = await token.balanceOf(crowdsale);
-      assert.notEqual(
-        balanceBefore.valueOf(),
-        ether(0).valueOf(),
-        'Balance not empty',
-      );
-
-      await contract.burnLeftTokens();
-
-      const balanceAfter = await token.balanceOf(crowdsale);
-      assert.equal(
-        balanceAfter.valueOf(),
-        ether(0).valueOf(),
-        'Balance is empty',
-      );
-    });
-
     it('transfer ownership on token', async () => {
       await increaseTimeTo(startTime);
 
