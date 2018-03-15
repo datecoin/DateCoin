@@ -56,22 +56,25 @@ contract DateCoinCrowdsale is Crowdsale, Ownable {
     uint256 weiAmount = msg.value;
     uint256 sold = totalSold();
 
-    uint256 tokens = weiAmount.mul(rate);
+    uint256 tokens;
 
     if (sold < _discount(25)) {
-      tokens = _calculateTokens(tokens, 75, sold);
+      tokens = _calculateTokens(weiAmount, 25, sold);
     }
     else if (sold >= _discount(25) && sold < _discount(20)) {
-      tokens = _calculateTokens(tokens, 80, sold);
+      tokens = _calculateTokens(weiAmount, 20, sold);
     }
     else if (sold >= _discount(20) && sold < _discount(15)) {
-      tokens = _calculateTokens(tokens, 85, sold);
+      tokens = _calculateTokens(weiAmount, 15, sold);
     }
     else if (sold >= _discount(15) && sold < _discount(10)) {
-      tokens = _calculateTokens(tokens, 90, sold);
+      tokens = _calculateTokens(weiAmount, 10, sold);
     }
     else if (sold >= _discount(10) && sold < _discount(5)) {
-      tokens = _calculateTokens(tokens, 95, sold);
+      tokens = _calculateTokens(weiAmount, 5, sold);
+    }
+    else {
+      tokens = weiAmount.mul(rate);
     }
 
     // Check limit
@@ -210,14 +213,17 @@ contract DateCoinCrowdsale is Crowdsale, Ownable {
     return discountTokens[_percent];
   }
 
-  function _calculateTokens(uint256 _weiOnRate, uint8 _percent, uint256 _totalSupplied) internal view returns (uint256) {
-    uint256 firstPart = _weiOnRate.mul(100).div(_percent);
-    uint256 lastPart = 0;
-    if (_totalSupplied.add(firstPart) > _discount(100 - _percent)) {
-      firstPart = _discount(100 - _percent).sub(_totalSupplied);
-      uint256 firstPartWei = firstPart.mul(_percent).div(100);
-      lastPart = (_weiOnRate.sub(firstPartWei)).mul(100).div(_percent + 5);
+  function _calculateTokens(uint256 _value, uint8 _off, uint256 _sold) internal view returns (uint256) {
+    uint256 withoutDiscounts = _value.mul(rate);
+    uint256 byDiscount = withoutDiscounts.mul(100).div(100 - _off);
+    if (_sold.add(byDiscount) > _discount(_off)) {
+      uint256 couldBeSold = _discount(_off).sub(_sold);
+      uint256 weiByDiscount = couldBeSold.div(4000).div(100).mul(100 - _off);
+      uint256 weiLefts = _value.sub(weiByDiscount);
+      uint256 withoutDiscountLeft = weiLefts.mul(4000);
+      uint256 byNextDiscount = withoutDiscountLeft.mul(100).div(100 - _off + 5);
+      return couldBeSold.add(byNextDiscount);
     }
-    return firstPart.add(lastPart);
+    return byDiscount;
   }
 }
