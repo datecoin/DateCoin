@@ -218,9 +218,9 @@ contract DateCoinCrowdsale is Crowdsale, Ownable {
     uint256 byDiscount = withoutDiscounts.mul(100).div(100 - _off);
     if (_sold.add(byDiscount) > _discount(_off)) {
       uint256 couldBeSold = _discount(_off).sub(_sold);
-      uint256 weiByDiscount = couldBeSold.div(4000).div(100).mul(100 - _off);
+      uint256 weiByDiscount = couldBeSold.div(rate).div(100).mul(100 - _off);
       uint256 weiLefts = _value.sub(weiByDiscount);
-      uint256 withoutDiscountLeft = weiLefts.mul(4000);
+      uint256 withoutDiscountLeft = weiLefts.mul(rate);
       uint256 byNextDiscount = withoutDiscountLeft.mul(100).div(100 - _off + 5);
       return couldBeSold.add(byNextDiscount);
     }
