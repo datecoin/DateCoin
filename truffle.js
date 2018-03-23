@@ -19,7 +19,7 @@ module.exports = {
       gas: 3000000,
       network_id: 3,
     },
-    main: {
+    live: {
       provider: () => {
         const { mnemonic, infuraAccessToken, ownerIndex} = properties;
         return new HDWalletProvider(mnemonic, `https://mainnet.infura.io/${infuraAccessToken}`, ownerIndex);
