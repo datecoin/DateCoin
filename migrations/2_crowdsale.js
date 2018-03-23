@@ -1,49 +1,159 @@
-var DateCoin = artifacts.require('./DateCoin.sol');
+const properties = require('../properties');
+const tools = require('../tools');
 
-// Testable contracts
-var DateCoinCrowdsaleTestable = artifacts.require(
-  './testable/DateCoinCrowdsaleTestable.sol',
-);
+var DateCoin = artifacts.require('DateCoin');
+var DateCoinCrowdsale = artifacts.require('DateCoinCrowdsale');
 
-module.exports = async function(deployer, network, accounts) {
-  if (
-    network === 'development' ||
-    network === 'develop' ||
-    network === 'test'
-  ) {
-    try {
-      const owner = accounts[0];
+// Convert value to wei
+const wei = value => web3.toWei(value, 'ether');
 
-      // First of all we need to deploy DateCoin contract
-      await deployer.deploy(DateCoin, 290769230);
-      const token = await DateCoin.deployed();
+const emit = async (token, emission, owner, accounts) => {
+  const labels = Object.keys(emission);
+  
+  for (const label of labels) {
+    const { address, value } = properties.emission[label];
+    const useAddress = accounts
+      ? accounts[labels.indexOf(label) + 1]
+      : address;
+    console.log(`Emission for ${label} on ${address} of ${wei(value)}`);
+    await token.mint(address, wei(value), { from: owner });
+  }
+  console.log(`Finish minting`);
+  await token.finishMinting({ from: owner });
+}
 
-      // Then, we create Crowdsale contract
-      // Params
-      const _startTime = web3.eth.getBlock(web3.eth.blockNumber).timestamp + 1;
-      const _endTime = _startTime + 60 * 60 * 24 * 20;
-      const _rate = 4000;
-      const _wallet = accounts[9];
-      const _vault = accounts[8];
-      const _preSaleVault = accounts[7];
-      const _tokenContractAddress = DateCoin.address;
-      await deployer.deploy(
-        DateCoinCrowdsaleTestable,
-        _startTime,
-        _endTime,
-        _rate,
-        _wallet,
-        _tokenContractAddress,
-        _vault,
-        _preSaleVault,
-      );
+module.exports = async (deployer, network, accounts) => {
+  switch(network) {
+    case 'development':
+    case 'develop':
+      try {
+        const owner = accounts[0];
 
-      // And transfer ownership to Crowdsale
-      await token.transferOwnership(DateCoinCrowdsaleTestable.address);
-    } catch (e) {
-      console.error(e);
-    }
-  } else {
-    console.log('Unknown network type', network);
+        // First of all we need to deploy DateCoin contract
+        const cap = wei('290769230');
+        await deployer.deploy(DateCoin, cap, { from: owner });
+        const token = await DateCoin.deployed();
+
+        await emit(token, properties.emission, owner, accounts);
+
+        // Then, we create Crowdsale contract
+        // Params
+        const {
+          start,
+          end,
+          rate,
+          wallet,
+          vault, 
+          preSaleVault
+        } = properties.crowdsale;
+
+        await deployer.deploy(
+          DateCoinCrowdsale,
+          start,
+          end,
+          rate,
+          wallet,
+          DateCoin.address,
+          vault,
+          preSaleVault,
+          { gas: 4700000, from: owner }
+        );
+        
+        console.log('////////////////////////////////////////////////////////////////\n');
+        console.log(' -- PLEASE COPY INFORMATION BELOW\n');
+        console.log('----------------------------------------------------------------');
+        console.log('> Contract name:', tools.contractName(DateCoin));
+        console.log('> Optimization:', true);
+        console.log('> Runs (Optimizer):', 200);
+        console.log('> Constructor params:');
+        console.log(tools.abiEncodedParams(["uint256"], [cap]));
+        console.log('----------------------------------------------------------------');
+        console.log('> Contract name:', tools.contractName(DateCoinCrowdsale));
+        console.log('> Optimization:', true);
+        console.log('> Runs (Optimizer):', 200);
+        console.log('> Constructor params:');
+        console.log(tools.abiEncodedParams(["uint256","uint256","uint256","address","address","address","address",], [start,
+          end,
+          rate,
+          wallet,
+          DateCoin.address,
+          vault,
+          preSaleVault,])
+        );
+        console.log('----------------------------------------------------------------');
+        console.log('////////////////////////////////////////////////////////////////\n');
+      } catch (e) {
+        console.error(e);
+      }
+      break;
+
+    case 'ropsten':
+      try {
+        const owner = accounts[0];
+        // First of all we need to deploy DateCoin contract
+        const cap = wei('290769230')
+
+        await deployer.deploy(DateCoin, cap, { from: owner });
+        const token = await DateCoin.deployed();
+
+        // emit(token, properties.emission, owner);
+
+        // Then, we create Crowdsale contract
+        // Params
+        const {
+          start,
+          end,
+          rate,
+          wallet,
+          vault, 
+          preSaleVault
+        } = properties.crowdsale;
+
+        await deployer.deploy(
+          DateCoinCrowdsale,
+          start,
+          end,
+          rate,
+          wallet,
+          DateCoin.address,
+          vault,
+          preSaleVault,
+          { gas: 4600000, from: owner }
+        );
+        
+        console.log('////////////////////////////////////////////////////////////////\n');
+        console.log(' -- PLEASE COPY INFORMATION BELOW\n');
+        console.log('----------------------------------------------------------------');
+        console.log('> Contract name:', tools.contractName(DateCoin));
+        console.log('> Optimization:', true);
+        console.log('> Runs (Optimizer):', 200);
+        console.log('> Constructor params:');
+        console.log(tools.abiEncodedParams(["uint256"], [cap]));
+        console.log('----------------------------------------------------------------');
+        console.log('> Contract name:', tools.contractName(DateCoinCrowdsale));
+        console.log('> Optimization:', true);
+        console.log('> Runs (Optimizer):', 200);
+        console.log('> Constructor params:');
+        console.log(tools.abiEncodedParams(["uint256","uint256","uint256","address","address","address","address",], [start,
+          end,
+          rate,
+          wallet,
+          DateCoin.address,
+          vault,
+          preSaleVault,])
+        );
+        console.log('----------------------------------------------------------------');
+        console.log('////////////////////////////////////////////////////////////////\n');
+      } catch (e) {
+        console.error(e);
+      }
+      break;
+
+    case 'live':
+      console.log(`Under development right now`);
+      break;
+
+    default:
+      console.log(`${network} is unknown network type`);
   }
 };

@@ -455,7 +455,6 @@ contract Crowdsale {
 
 
 
-
 contract DateCoinCrowdsale is Crowdsale, Ownable {
   enum ManualState {
     WORKING, READY, NONE

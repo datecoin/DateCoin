@@ -1,0 +1,47 @@
+module.exports = {
+  mnemonic: 'mnemonic words here',
+  infuraAccessToken: 'Your Infura access token here',
+  ownerIndex: 0,
+  crowdsale: {
+    start: 0,
+    end: 0,
+    rate: 1,
+    wallet: '0x0',
+    vault: '0x0',
+    preSaleVault: '0x0',
+  },
+  emission: {
+    team: {
+      address: '0x14fe7e907A0485f4e4e1e799223552264c1D014d',
+      value: '34892307',
+    },
+    adviser1: {
+      address: '0x9f6177be913E2f89C04630BEeb068A60D609925f',
+      value: '11630769',
+    },
+    adviser2: {
+      address: '0x11680a5A32D25Fd2a3bb7014e034D1531b5C4D94',
+      value: '11630769',
+    },
+    bounty: {
+      address: '0x8A01C9FB14a99F130e385d28e21311C29f44269c',
+      value: '2907692',
+    },
+    marketing: {
+      address: '0x5C228E53435c51595a316830c01BEE872b62FA1d',
+      value: '11630769',
+    },
+    reserved: {
+      address: '0x1DDCef46DD738111a70DA9c0d5760aa820B344D8',
+      value: '29076924',
+    },
+    preSale: {
+      address: '0x31aBaCa4B151d48f7dc27EB428dA119eB8b9fDC1',
+      value: '18000000',
+    },
+    crowdsale: {
+      address: '0xaea73a030b42535c72B2Fa4Eb4041e87bD0F54e2',
+      value: '171000000',
+    },
+  }
+}

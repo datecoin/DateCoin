@@ -1,6 +1,9 @@
 require('babel-polyfill');
 require('babel-register');
 
+const HDWalletProvider = require("truffle-hdwallet-provider");
+const properties = require("./properties");
+
 module.exports = {
   networks: {
     development: {
@@ -8,12 +11,27 @@ module.exports = {
       port: 7545,
       network_id: '*',
     },
-    rinkeby: {
-      host: 'localhost', // Connect to geth on the specified
-      port: 8545,
-      from: '0x8156b4E0909e80eeE5CfaA5F15FC91975556740F', // default address to use for any transaction Truffle makes during migrations
-      network_id: 4,
+    ropsten: {
+      provider: () => {
+        const { mnemonic, infuraAccessToken, ownerIndex } = properties;
+        return new HDWalletProvider(mnemonic, `https://ropsten.infura.io/${infuraAccessToken}`, ownerIndex);
+      },
       gas: 3000000,
+      network_id: 3,
     },
+    main: {
+      provider: () => {
+        const { mnemonic, infuraAccessToken, ownerIndex} = properties;
+        return new HDWalletProvider(mnemonic, `https://mainnet.infura.io/${infuraAccessToken}`, ownerIndex);
+      },
+      gas: 3000000,
+      network_id: 1,
+    }
   },
+  solc: {
+    optimizer: {
+      enabled: true,
+      runs: 200
+    }
+  }
 };
